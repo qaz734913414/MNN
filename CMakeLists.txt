@@ -46,6 +46,7 @@ add_custom_target (GenVCSHDR DEPENDS "${CMAKE_CURRENT_LIST_DIR}/include/MNN/VCS.
 # Required for OpenCL/OpenGL/Vulkan CodeGen
 include(FindPythonInterp REQUIRED)
 # build options
+option(MNN_USE_SYSTEM_LIB "For opencl and vulkan, use system lib or use dlopen" OFF)
 option(MNN_BUILD_HARD "Build -mfloat-abi=hard or not" OFF)
 option(MNN_BUILD_SHARED_LIBS "MNN build shared or static lib" ON)
 option(MNN_FORBID_MULTI_THREAD "Disable Multi Thread" OFF)
@@ -76,6 +77,14 @@ IF((MSVC OR WIN32) AND MNN_SEP_BUILD)
 ENDIF()
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/macros.cmake)
+
+IF(NOT APPLE AND NOT MNN_BUILD_SHARED_LIBS)
+  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+  SET(MNN_SEP_BUILD OFF)
+  IF(MNN_BUILD_CONVERTER)
+    SET(MNN_PORTABLE_BUILD ON)
+  ENDIF()
+ENDIF()
 
 # Import FlatBuffers and use standard way to generate schemas
 IF(CMAKE_CROSSCOMPILING)
@@ -150,6 +159,7 @@ message(STATUS "\tMetal: ${MNN_METAL}")
 message(STATUS "\tOpenCL: ${MNN_OPENCL}")
 message(STATUS "\tOpenGL: ${MNN_OPENGL}")
 message(STATUS "\tVulkan: ${MNN_VULKAN}")
+message(STATUS "\tARM82: ${MNN_ARM82}")
 message(STATUS "\tOpenMP: ${MNN_OPENMP}")
 message(STATUS "\tHidden: ${MNN_HIDDEN}")
 message(STATUS "\tBuild Path: ${CMAKE_CURRENT_BINARY_DIR}")
@@ -357,6 +367,7 @@ IF(MNN_VULKAN)
   ELSE()
     list(APPEND MNN_TARGETS MNN_Vulkan)
     list(APPEND MNN_OBJECTS_TO_LINK $<TARGET_OBJECTS:MNN_Vulkan>)
+    list(APPEND MNN_EXTRA_DEPENDS ${MNN_VULKAN_LIBS})
   ENDIF()
 ENDIF()
 
@@ -387,6 +398,7 @@ ENDIF()
 
 # ARM82 Assemblies
 IF(MNN_ARM82)
+  add_definitions(-DENABLE_ARMV82)
   add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/source/backend/arm82/)
   IF(MNN_SEP_BUILD)
     list(APPEND MNN_DEPS MNN_Arm82)
