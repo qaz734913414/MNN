@@ -33,7 +33,7 @@ public:
             } else if ((inputs.size() == 1) && key == "scales") {
                 scalesSize = attr->list()->f()->size();
                 scales.resize(scalesSize);
-                memcmp(scales.data(), attr->list()->f()->data(), sizeof(float) * scalesSize);
+                memcpy(scales.data(), attr->list()->f()->data(), sizeof(float) * scalesSize);
             } else if (key == "coordinate_transformation_mode") {
                 coordMode = attr->s()->str();
             }
@@ -78,7 +78,6 @@ public:
             MNN_ERROR("MNN Not support Upsample when scale size = %d\n", scalesSize);
         }
         interpParam->alignCorners = (coordMode == "align_corners");
-        interpParam->halfPixelCenters = (interpParam->alignCorners == false);
         
         // 1:near 2: bilinear 3: cubic
         if (interpMode == "nearest") {

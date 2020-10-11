@@ -92,7 +92,6 @@ static bool needExtractInput(uint32_t opCode) {
     NONEED(tflite::BuiltinOperator_SPLIT);
     NONEED(tflite::BuiltinOperator_CONCATENATION);
     NONEED(tflite::BuiltinOperator_CONV_2D);
-    NONEED(tflite::BuiltinOperator_RESHAPE);
     NONEED(tflite::BuiltinOperator_RESIZE_BILINEAR);
     NONEED(tflite::BuiltinOperator_RESIZE_NEAREST_NEIGHBOR);
     NONEED(tflite::BuiltinOperator_SOFTMAX);
@@ -126,6 +125,10 @@ int tflite2MNNNet(const std::string inputModel, const std::string bizCode, std::
                 const int weightIndex    = ops[j]->inputs[1];
                 const auto& weightTensor = tensors[weightIndex];
                 quantizedModel           = weightTensor->type == tflite::TensorType_UINT8;
+                if(weightTensor->type == tflite::TensorType_INT8){
+                    DLOG(ERROR) << "***MNN DO NOT SUPPORT Tflite [INT8] quantized model, please use MNN quantization tool to quantize model***";
+                    return -1;
+                }
                 if (!quantizedModel)
                     break;
             }

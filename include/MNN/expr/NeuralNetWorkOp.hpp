@@ -6,6 +6,9 @@
 //  Copyright © 2018, Alibaba Group Holding Limited
 //
 
+#ifndef NeuralNetWorkOp_HPP
+#define NeuralNetWorkOp_HPP
+
 namespace MNN {
 namespace Express {
 enum PaddingMode {CAFFE, VALID, SAME};
@@ -109,6 +112,11 @@ MNN_PUBLIC VARP _DetectionOutput(VARP location, VARP confidence, VARP priorbox,
                         float nms_threshhold, int nms_topk, int code_type, 
                         bool variance_encoded_in_target,
                         int keep_top_k, float confidence_threshold, float visualize_threshold); 
+MNN_PUBLIC  std::vector<VARP> _DetectionPostProcess(VARP encode_boxes, VARP class_predictions, VARP anchors, 
+                        int num_classes, int max_detections, 
+                        int max_class_per_detection, int detections_per_class, 
+                        float nms_threshold, float iou_threshold, 
+                        bool use_regular_nms, std::vector<float> centersize_encoding);
 MNN_PUBLIC VARP _Interp(VARPS xs, float widthScale, float heightScale, int outputWidth, int outputHeight, int resizeType, bool alignCorners);
 
 MNN_PUBLIC VARP _ZeroGrad(VARP x);
@@ -119,5 +127,9 @@ MNN_PUBLIC VARP _Conv(std::vector<int8_t>&& weight, std::vector<int>&& bias, std
 MNN_PUBLIC VARP _FloatToInt8(VARP x, VARP scale, char minValue, char maxValue);
 MNN_PUBLIC VARP _Int8ToFloat(VARP x, VARP scale);
 
+MNN_PUBLIC VARP _Select(VARP select, VARP input0, VARP input1);
+
 } // namespace Express
 } // namespace MNN
+
+#endif /* NeuralNetWorkOp_HPP */

@@ -116,22 +116,25 @@ public:
 
             for (int i = 0; i < axes.size(); ++i) {
                 int axis      = axes[i];
+                /*
+                 https://github.com/onnx/onnx/blob/master/docs/Operators.md#Slice
+                 abs(begins) and abs(ends) can be very large, which represents n (the number of elements in this dimension).
+                 It's used to slicing to the end of a dimension with unknown size.
+                 Example: Subgraph exported by Onnx (opset_version>=11) for Pytorch's Pad contain Slice Op, which use -INT64_MAX as end.
+                 */
                 tfBegin[axis] = starts[i];
-                // MNN only support int32 instead of int64, and int64 will be limit
-                // to (1 << 30) for saturation.
-                if (ends[i] == (1 << 30)) {
-                    tfEnd[axis] = inputInfo->dim[axis];
-                } else if (ends[i] == -(1 << 30)) {
-                    tfEnd[axis] = 0;
-                } else {
-                    tfEnd[axis] = ends[i];
-                }
+                tfEnd[axis] = ends[i];
                 tfStrides[axis] = strides[i];
             }
             auto beginVar   = MakeConstVecVar(tfBegin);
             auto EndVar     = MakeConstVecVar(tfEnd);
             auto StridesVar = MakeConstVecVar(tfStrides);
             sliceOp->type   = OpType_StridedSlice;
+            sliceOp->main.type = OpParameter_StridedSliceParam;
+            auto param = new StridedSliceParamT;
+            param->Index = DataType_DT_INT32;
+            param->T = DataType_DT_FLOAT;
+            sliceOp->main.value = param;
             return Expr::create(sliceOp.get(), {input, beginVar, EndVar, StridesVar}, expr->outputSize());
         } else {
             std::vector<int> tfBegin(ndim, 0);
@@ -141,6 +144,9 @@ public:
                 auto fin = ends[i];
                 if (fin > inputInfo->dim[axis]) {
                     fin = inputInfo->dim[axis];
+                }
+                if (fin < 0) {
+                    fin += inputInfo->dim[axis];
                 }
                 if (starts[i] < 0) {
                     starts[i] = inputInfo->dim[axis] + starts[i];
